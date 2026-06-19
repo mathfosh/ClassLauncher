@@ -1,0 +1,49 @@
+<ci:SettingsPageBase x:Class="ClassLauncher.Views.SettingsPages.SettingsPage"
+      xmlns="https://github.com/avaloniaui"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ci="http://classisland.tech/schemas/xaml/core"
+      xmlns:models="clr-namespace:ClassLauncher.Models"
+      x:DataType="ci:SettingsPageBase"
+      Title="课堂启动器">
+    <ScrollViewer>
+        <StackPanel MaxWidth="750" Spacing="6">
+            <ci:SettingsCard IconGlyph="InformationOutline"
+                             Header="课堂启动器"
+                             Description="配置在上课时提醒打开的软件。上课时，插件会依次询问是否打开列表中的软件。" />
+
+            <ItemsControl ItemsSource="{Binding Plugin.Settings.Apps}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="models:AppEntry">
+                        <Border BorderBrush="{DynamicResource MaterialDesignDivider}"
+                                BorderThickness="0 0 0 1"
+                                Padding="0 8 0 8"
+                                Margin="0 0 0 4">
+                            <Grid ColumnDefinitions="*,*,Auto">
+                                <StackPanel Grid.Column="0" Margin="0 0 8 0" Spacing="2">
+                                    <TextBlock Text="软件名称" FontSize="12"
+                                               Foreground="{DynamicResource MaterialDesignBodyLight}" />
+                                    <TextBox Text="{Binding Name}" Width="200" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Margin="0 0 8 0" Spacing="2">
+                                    <TextBlock Text="软件路径" FontSize="12"
+                                               Foreground="{DynamicResource MaterialDesignBodyLight}" />
+                                    <TextBox Text="{Binding Path}" Width="200" />
+                                </StackPanel>
+
+                                <Button Grid.Column="2" VerticalAlignment="Bottom"
+                                        Click="DeleteApp_Click"
+                                        Tag="{Binding}"
+                                        Content="删除" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Button Content="+ 添加软件"
+                    Click="AddApp_Click"
+                    HorizontalAlignment="Left" />
+        </StackPanel>
+    </ScrollViewer>
+</ci:SettingsPageBase>

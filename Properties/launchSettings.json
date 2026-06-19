@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "ClassIsland 插件": {
+      "commandName": "Executable",
+      "executablePath": "c:\\Users\\李骏健\\Documents\\trae_projects\\clp\\ClassIsland\\ClassIsland.Desktop\\bin\\Debug\\net8.0-windows10.0.19041.0\\ClassIsland.Desktop.exe",
+      "commandLineArgs": "-epp $(TargetDir)",
+      "workingDirectory": "c:\\Users\\李骏健\\Documents\\trae_projects\\clp\\ClassIsland\\ClassIsland.Desktop\\bin\\Debug\\net8.0-windows10.0.19041.0"
+    }
+  }
+}
