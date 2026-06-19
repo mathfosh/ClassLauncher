@@ -3,7 +3,7 @@
 # 插件清单格式：https://docs.classisland.tech/zh-cn/latest/dev/plugins/create-project/#%E6%8F%92%E4%BB%B6%E6%B8%85%E5%8D%95%E6%96%87%E4%BB%B6
 
 id: classlauncher.app-launcher
-name: 课堂启动器
+name: ClassLauncher
 description: 在上课时提醒并询问是否打开指定的软件，适合需要在上课时启动特定教学工具的场景。
 entranceAssembly: "ClassLauncher.dll"
 url: https://github.com/mathfosh/ClassLauncher

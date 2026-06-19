@@ -9,7 +9,7 @@ using ClassLauncher.Models;
 
 namespace ClassLauncher.Views.SettingsPages;
 
-[SettingsPageInfo("classlauncher.settings", "课堂启动器")]
+[SettingsPageInfo("classlauncher.settings", "ClassLauncher")]
 public class SettingsPage : SettingsPageBase
 {
     public Plugin Plugin { get; }
@@ -33,7 +33,7 @@ public class SettingsPage : SettingsPageBase
                 Spacing = 4,
                 Children =
                 {
-                    new TextBlock { Text = "课堂启动器", FontWeight = FontWeight.Bold, FontSize = 16 },
+                    new TextBlock { Text = "ClassLauncher", FontWeight = FontWeight.Bold, FontSize = 16 },
                     new TextBlock { Text = "配置在上课时提醒打开的软件。可为每个软件指定限定课程（逗号分隔），留空则匹配所有课程。",
                         TextWrapping = TextWrapping.Wrap }
                 }
