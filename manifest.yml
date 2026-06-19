@@ -6,7 +6,10 @@ id: classlauncher.app-launcher
 name: 课堂启动器
 description: 在上课时提醒并询问是否打开指定的软件，适合需要在上课时启动特定教学工具的场景。
 entranceAssembly: "ClassLauncher.dll"
-url: https://github.com/ClassIsland/ClassIsland/discussions/1432
+url: https://github.com/mathfosh/ClassLauncher
 version: 1.0.0.0
 apiVersion: 2.0.0.0
-author: 课堂启动器
+author: mathfosh
+repoOwner: mathfosh
+repoName: ClassLauncher
+assetsRoot: master/ClassLauncher
