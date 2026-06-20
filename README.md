@@ -39,7 +39,7 @@
 - .NET 8.0
 - 仅支持Windows
   
-## 提醒 PAY ATTENTION!
+## 温馨提示 PAY ATTENTION!
 - 在复制文件路径时，建议不要复制双引号，否则获取应用图标和传入参数功能无法使用
 
 
