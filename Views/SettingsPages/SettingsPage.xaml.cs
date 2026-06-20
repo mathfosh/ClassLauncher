@@ -168,6 +168,8 @@ public class SettingsPage : SettingsPageBase
             case "AdvanceBox":
                 if (double.TryParse(tb.Text, out var minutes))
                     app.AdvanceMinutes = minutes;
+                else if (!string.IsNullOrEmpty(tb.Text))
+                    app.AdvanceMinutes = 0;
                 break;
         }
     }

@@ -30,3 +30,6 @@ bld/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
+
+## Launch settings
+Properties/launchSettings.json

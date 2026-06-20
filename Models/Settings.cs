@@ -22,6 +22,12 @@ public partial class AppEntry : ObservableObject
     /// </summary>
     [ObservableProperty]
     private double _advanceMinutes;
+
+    partial void OnAdvanceMinutesChanged(double value)
+    {
+        if (value < 0)
+            AdvanceMinutes = 0;
+    }
 }
 
 public partial class Settings : ObservableObject

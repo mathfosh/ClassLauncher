@@ -8,6 +8,7 @@ using ClassIsland.Core;
 using ClassIsland.Core.Abstractions.Services;
 using FluentAvalonia.UI.Controls;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using ClassLauncher.Models;
 using AvaloniaBitmap = Avalonia.Media.Imaging.Bitmap;
 using SysBitmap = System.Drawing.Bitmap;
@@ -19,13 +20,15 @@ public class AppLaunchService : IHostedService
 {
     private readonly ILessonsService _lessonsService;
     private readonly Settings _settings;
+    private readonly ILogger<AppLaunchService> _logger;
     private bool _isPrompting;
     private bool _hasTriggeredPreClass;
 
-    public AppLaunchService(ILessonsService lessonsService, Plugin plugin)
+    public AppLaunchService(ILessonsService lessonsService, Plugin plugin, ILogger<AppLaunchService> logger)
     {
         _lessonsService = lessonsService;
         _settings = plugin.Settings;
+        _logger = logger;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
@@ -54,7 +57,10 @@ public class AppLaunchService : IHostedService
         {
             var rootWindow = AppBase.Current.GetRootWindow();
             if (rootWindow == null)
+            {
+                _logger.LogWarning("无法获取主窗口，跳过上课提示");
                 return;
+            }
 
             foreach (var app in _settings.Apps)
             {
@@ -62,6 +68,10 @@ public class AppLaunchService : IHostedService
                     continue;
                 await PromptAppIfNeeded(rootWindow, app);
             }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "上课提示处理失败");
         }
         finally
         {
@@ -92,12 +102,19 @@ public class AppLaunchService : IHostedService
         {
             var rootWindow = AppBase.Current.GetRootWindow();
             if (rootWindow == null)
+            {
+                _logger.LogWarning("无法获取主窗口，跳过提前提示");
                 return;
+            }
 
             foreach (var app in appsToPrompt)
             {
                 await PromptAppIfNeeded(rootWindow, app);
             }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "提前提示处理失败");
         }
         finally
         {
@@ -189,13 +206,14 @@ public class AppLaunchService : IHostedService
             ms.Position = 0;
             return new AvaloniaBitmap(ms);
         }
-        catch
+        catch (Exception)
         {
+            // 图标提取失败是正常情况（如路径不存在），静默返回 null
             return null;
         }
     }
 
-    private static void LaunchApp(AppEntry app)
+    private void LaunchApp(AppEntry app)
     {
         try
         {
@@ -207,6 +225,7 @@ public class AppLaunchService : IHostedService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "启动应用失败: {AppName}", app.Name);
             var rootWindow = AppBase.Current.GetRootWindow();
             if (rootWindow != null)
             {
