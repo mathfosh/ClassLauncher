@@ -24,7 +24,6 @@ public class AppLaunchService : IHostedService
     private bool _isPrompting;
     private bool _hasTriggeredPreClass;
     private readonly List<AppEntry> _autoDisabledThisCycle = new();
-    private DateTime _lastRecoveryCheck = DateTime.MinValue;
 
     public AppLaunchService(ILessonsService lessonsService, Plugin plugin, ILogger<AppLaunchService> logger)
     {
@@ -54,8 +53,6 @@ public class AppLaunchService : IHostedService
 
         if (_isPrompting)
             return;
-
-        CheckAutoRecovery();
 
         _isPrompting = true;
         try
@@ -97,8 +94,6 @@ public class AppLaunchService : IHostedService
         if (_isPrompting || _hasTriggeredPreClass)
             return;
 
-        CheckAutoRecovery();
-
         var leftTime = _lessonsService.OnClassLeftTime;
         if (leftTime <= TimeSpan.Zero)
             return;
@@ -139,37 +134,7 @@ public class AppLaunchService : IHostedService
         {
             _isPrompting = false;
         }
-    }
-
-    /// <summary>
-    /// 检查并执行自动恢复逻辑。每 30 秒最多检查一次。
-    /// </summary>
-    private void CheckAutoRecovery()
-    {
-        if (_settings.AutoRecoveryMinutes <= 0)
-            return;
-
-        var now = DateTime.Now;
-        if ((now - _lastRecoveryCheck).TotalSeconds < 30)
-            return;
-
-        _lastRecoveryCheck = now;
-
-        foreach (var app in _settings.Apps)
-        {
-            if (!app.AutoDisabledAt.HasValue)
-                continue;
-
-            var elapsed = now - app.AutoDisabledAt.Value;
-            if (elapsed.TotalMinutes >= _settings.AutoRecoveryMinutes)
-            {
-                _logger.LogInformation("自动恢复规则: {AppName}（已禁用 {Minutes:F1} 分钟）",
-                    app.Name, elapsed.TotalMinutes);
-                app.ResetAutoDisableState();
-                app.IsEnabled = true;
-            }
-        }
-    }
+}
 
     private async Task PromptAppIfNeeded(TopLevel rootWindow, AppEntry app)
     {

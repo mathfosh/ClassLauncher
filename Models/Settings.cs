@@ -95,21 +95,9 @@ public partial class Settings : ObservableObject
     [ObservableProperty]
     private int _autoDisableFailThreshold = 1;
 
-    /// <summary>
-    /// 自动恢复时间（分钟）。0=不自动恢复，>0=禁用后N分钟自动重新启用。
-    /// </summary>
-    [ObservableProperty]
-    private int _autoRecoveryMinutes;
-
-    partial void OnAutoDisableFailThresholdChanged(int value)
+partial void OnAutoDisableFailThresholdChanged(int value)
     {
         if (value < 1)
             AutoDisableFailThreshold = 1;
-    }
-
-    partial void OnAutoRecoveryMinutesChanged(int value)
-    {
-        if (value < 0)
-            AutoRecoveryMinutes = 0;
     }
 }

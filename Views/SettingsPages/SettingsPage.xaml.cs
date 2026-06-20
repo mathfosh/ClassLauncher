@@ -354,24 +354,6 @@ public class SettingsPage : SettingsPageBase
         thresholdPanel.Children.Add(thresholdBox);
         panel.Children.Add(thresholdPanel);
 
-        // 自动恢复时间
-        var recoveryPanel = new StackPanel { Margin = new Thickness(0, 4, 0, 0), Spacing = 2 };
-        recoveryPanel.Children.Add(new TextBlock { Text = "自动恢复时间（分钟，0=不自动恢复）", FontSize = 12, Foreground = Brushes.Gray });
-        var recoveryBox = new TextBox
-        {
-            Text = Plugin.Settings.AutoRecoveryMinutes.ToString(),
-            Width = 80,
-            Watermark = "0"
-        };
-        recoveryBox.PropertyChanged += (_, e) =>
-        {
-            if (e.Property != TextBox.TextProperty) return;
-            if (int.TryParse(recoveryBox.Text, out var val))
-                Plugin.Settings.AutoRecoveryMinutes = val;
-        };
-        recoveryPanel.Children.Add(recoveryBox);
-        panel.Children.Add(recoveryPanel);
-
         border.Child = panel;
         return border;
     }
