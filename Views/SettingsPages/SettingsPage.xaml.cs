@@ -41,6 +41,9 @@ public class SettingsPage : SettingsPageBase
         };
         mainPanel.Children.Add(infoCard);
 
+        // 全局自动禁用配置
+        mainPanel.Children.Add(CreateGlobalSettingsPanel());
+
         // 可用课程列表
         _availableCoursesLabel = new TextBlock
         {
@@ -91,6 +94,16 @@ public class SettingsPage : SettingsPageBase
         if (sender is Control element && element.Tag is AppEntry app)
         {
             Plugin.Settings.Apps.Remove(app);
+        }
+    }
+
+    private void ResetApp_Click(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control element && element.Tag is AppEntry app)
+        {
+            app.ResetAutoDisableState();
+            app.IsEnabled = true;
+            RebuildAppList();
         }
     }
 
@@ -266,11 +279,129 @@ public class SettingsPage : SettingsPageBase
         return null;
     }
 
-    private Control CreateAppRow(AppEntry app)
+    /// <summary>
+    /// 创建全局自动禁用配置面板。
+    /// </summary>
+    private Control CreateGlobalSettingsPanel()
     {
         var border = new Border
         {
             BorderBrush = Brushes.Gray,
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(4),
+            Padding = new Thickness(12),
+            Margin = new Thickness(0, 0, 0, 4)
+        };
+
+        var panel = new StackPanel { Spacing = 8 };
+
+        panel.Children.Add(new TextBlock
+        {
+            Text = "自动禁用设置",
+            FontWeight = FontWeight.Bold,
+            FontSize = 14
+        });
+
+        panel.Children.Add(new TextBlock
+        {
+            Text = "当软件启动失败达到指定次数时，系统可自动禁用该规则，避免反复弹出错误提示。",
+            TextWrapping = TextWrapping.Wrap,
+            Foreground = Brushes.Gray,
+            FontSize = 12
+        });
+
+        // 启用自动禁用
+        var autoDisableRow = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("Auto,*"),
+            Margin = new Thickness(0, 4, 0, 0)
+        };
+        var autoDisableToggle = new ToggleSwitch
+        {
+            IsChecked = Plugin.Settings.AutoDisableEnabled,
+            OnContent = "开",
+            OffContent = "关"
+        };
+        autoDisableToggle.IsCheckedChanged += (_, _) =>
+        {
+            Plugin.Settings.AutoDisableEnabled = autoDisableToggle.IsChecked ?? true;
+        };
+        Grid.SetColumn(autoDisableToggle, 0);
+        autoDisableRow.Children.Add(autoDisableToggle);
+
+        var autoDisableLabel = new StackPanel { Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
+        autoDisableLabel.Children.Add(new TextBlock { Text = "启用自动禁用机制", FontSize = 13 });
+        autoDisableLabel.Children.Add(new TextBlock { Text = "关闭后，启动失败时不会自动禁用任何规则", FontSize = 11, Foreground = Brushes.Gray });
+        Grid.SetColumn(autoDisableLabel, 1);
+        autoDisableRow.Children.Add(autoDisableLabel);
+        panel.Children.Add(autoDisableRow);
+
+        // 失败阈值
+        var thresholdPanel = new StackPanel { Margin = new Thickness(0, 4, 0, 0), Spacing = 2 };
+        thresholdPanel.Children.Add(new TextBlock { Text = "失败次数阈值", FontSize = 12, Foreground = Brushes.Gray });
+        var thresholdBox = new TextBox
+        {
+            Text = Plugin.Settings.AutoDisableFailThreshold.ToString(),
+            Width = 80,
+            Watermark = "1"
+        };
+        thresholdBox.PropertyChanged += (_, e) =>
+        {
+            if (e.Property != TextBox.TextProperty) return;
+            if (int.TryParse(thresholdBox.Text, out var val))
+                Plugin.Settings.AutoDisableFailThreshold = val;
+        };
+        thresholdPanel.Children.Add(thresholdBox);
+        panel.Children.Add(thresholdPanel);
+
+        // 自动恢复时间
+        var recoveryPanel = new StackPanel { Margin = new Thickness(0, 4, 0, 0), Spacing = 2 };
+        recoveryPanel.Children.Add(new TextBlock { Text = "自动恢复时间（分钟，0=不自动恢复）", FontSize = 12, Foreground = Brushes.Gray });
+        var recoveryBox = new TextBox
+        {
+            Text = Plugin.Settings.AutoRecoveryMinutes.ToString(),
+            Width = 80,
+            Watermark = "0"
+        };
+        recoveryBox.PropertyChanged += (_, e) =>
+        {
+            if (e.Property != TextBox.TextProperty) return;
+            if (int.TryParse(recoveryBox.Text, out var val))
+                Plugin.Settings.AutoRecoveryMinutes = val;
+        };
+        recoveryPanel.Children.Add(recoveryBox);
+        panel.Children.Add(recoveryPanel);
+
+        border.Child = panel;
+        return border;
+    }
+
+    /// <summary>
+    /// 处理 ToggleSwitch 切换：用户手动重新启用时，重置自动禁用状态。
+    /// </summary>
+    private static void OnToggleSwitchChanged(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not ToggleSwitch ts || ts.Tag is not AppEntry app)
+            return;
+
+        var isChecked = ts.IsChecked ?? false;
+        app.IsEnabled = isChecked;
+
+        if (isChecked && app.AutoDisabledAt.HasValue)
+        {
+            app.ResetAutoDisableState();
+        }
+    }
+
+    private Control CreateAppRow(AppEntry app)
+    {
+        var isDisabled = !app.IsEnabled;
+        var isAutoDisabled = app.AutoDisabledAt.HasValue;
+
+        var border = new Border
+        {
+            BorderBrush = isAutoDisabled ? new SolidColorBrush(Colors.OrangeRed) :
+                          isDisabled ? Brushes.Gray : Brushes.Gray,
             BorderThickness = new Thickness(0, 0, 0, 1),
             Padding = new Thickness(0, 8, 0, 8),
             Tag = app
@@ -278,9 +409,25 @@ public class SettingsPage : SettingsPageBase
 
         var grid = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("*,*,*,Auto,60,Auto"),
-            RowDefinitions = new RowDefinitions("Auto")
+            ColumnDefinitions = new ColumnDefinitions("Auto,*,*,*,Auto,60,Auto"),
+            RowDefinitions = new RowDefinitions("Auto,Auto")
         };
+
+        // 行 0: 启用开关 + 名称 + 路径 + 参数 + 课程 + 提前 + 删除
+        // 启用开关
+        var toggle = new ToggleSwitch
+        {
+            IsChecked = app.IsEnabled,
+            OnContent = "",
+            OffContent = "",
+            Tag = app,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top,
+            Margin = new Thickness(0, 0, 8, 0)
+        };
+        toggle.IsCheckedChanged += OnToggleSwitchChanged;
+        Grid.SetColumn(toggle, 0);
+        Grid.SetRow(toggle, 0);
+        grid.Children.Add(toggle);
 
         // 名称
         var namePanel = new StackPanel { Margin = new Thickness(0, 0, 8, 0), Spacing = 2 };
@@ -288,7 +435,8 @@ public class SettingsPage : SettingsPageBase
         var nameBox = new TextBox { MinWidth = 100, Text = app.Name, Name = "NameBox", Tag = app };
         nameBox.PropertyChanged += OnTextBoxPropertyChanged;
         namePanel.Children.Add(nameBox);
-        Grid.SetColumn(namePanel, 0);
+        Grid.SetColumn(namePanel, 1);
+        Grid.SetRow(namePanel, 0);
         grid.Children.Add(namePanel);
 
         // 路径
@@ -297,7 +445,8 @@ public class SettingsPage : SettingsPageBase
         var pathBox = new TextBox { MinWidth = 100, Text = app.Path, Name = "PathBox", Tag = app };
         pathBox.PropertyChanged += OnTextBoxPropertyChanged;
         pathPanel.Children.Add(pathBox);
-        Grid.SetColumn(pathPanel, 1);
+        Grid.SetColumn(pathPanel, 2);
+        Grid.SetRow(pathPanel, 0);
         grid.Children.Add(pathPanel);
 
         // 参数
@@ -315,7 +464,8 @@ public class SettingsPage : SettingsPageBase
         };
         argsBox.PropertyChanged += OnTextBoxPropertyChanged;
         argsPanel.Children.Add(argsBox);
-        Grid.SetColumn(argsPanel, 2);
+        Grid.SetColumn(argsPanel, 3);
+        Grid.SetRow(argsPanel, 0);
         grid.Children.Add(argsPanel);
 
         // 限定课程
@@ -325,7 +475,8 @@ public class SettingsPage : SettingsPageBase
             Watermark = "留空=所有课程" };
         courseBox.PropertyChanged += OnTextBoxPropertyChanged;
         coursePanel.Children.Add(courseBox);
-        Grid.SetColumn(coursePanel, 3);
+        Grid.SetColumn(coursePanel, 4);
+        Grid.SetRow(coursePanel, 0);
         grid.Children.Add(coursePanel);
 
         // 提前提示
@@ -335,7 +486,8 @@ public class SettingsPage : SettingsPageBase
             Watermark = "0" };
         advanceBox.PropertyChanged += OnTextBoxPropertyChanged;
         advancePanel.Children.Add(advanceBox);
-        Grid.SetColumn(advancePanel, 4);
+        Grid.SetColumn(advancePanel, 5);
+        Grid.SetRow(advancePanel, 0);
         grid.Children.Add(advancePanel);
 
         // 删除按钮
@@ -346,8 +498,57 @@ public class SettingsPage : SettingsPageBase
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Bottom
         };
         deleteBtn.Click += DeleteApp_Click;
-        Grid.SetColumn(deleteBtn, 5);
+        Grid.SetColumn(deleteBtn, 6);
+        Grid.SetRow(deleteBtn, 0);
         grid.Children.Add(deleteBtn);
+
+        // 行 1: 状态指示器（跨列）
+        if (isDisabled)
+        {
+            var statusPanel = new StackPanel
+            {
+                Orientation = Avalonia.Layout.Orientation.Horizontal,
+                Spacing = 4,
+                Margin = new Thickness(0, 4, 0, 0)
+            };
+
+            var statusDot = new Border
+            {
+                Width = 8,
+                Height = 8,
+                CornerRadius = new CornerRadius(4),
+                Background = isAutoDisabled ? new SolidColorBrush(Colors.OrangeRed) : new SolidColorBrush(Colors.Gray),
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+            };
+            statusPanel.Children.Add(statusDot);
+
+            var statusText = new TextBlock
+            {
+                Text = app.StatusText,
+                FontSize = 11,
+                Foreground = isAutoDisabled ? new SolidColorBrush(Colors.OrangeRed) : Brushes.Gray,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+            };
+            statusPanel.Children.Add(statusText);
+
+            if (isAutoDisabled)
+            {
+                var resetBtn = new Button
+                {
+                    Content = "重置",
+                    FontSize = 11,
+                    Tag = app,
+                    Padding = new Thickness(8, 2, 8, 2)
+                };
+                resetBtn.Click += ResetApp_Click;
+                statusPanel.Children.Add(resetBtn);
+            }
+
+            Grid.SetColumn(statusPanel, 0);
+            Grid.SetColumnSpan(statusPanel, 7);
+            Grid.SetRow(statusPanel, 1);
+            grid.Children.Add(statusPanel);
+        }
 
         border.Child = grid;
         return border;

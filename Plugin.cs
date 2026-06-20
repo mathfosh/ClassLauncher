@@ -37,6 +37,9 @@ public class Plugin : PluginBase
             Settings = new Settings();
         }
 
+        // 监听 Settings 根属性变更（全局配置项）
+        Settings.PropertyChanged += OnSettingsPropertyChanged;
+
         // 监听集合变更：添加/移除条目时，正确管理 PropertyChanged 订阅
         Settings.Apps.CollectionChanged += OnAppsCollectionChanged;
 
@@ -62,6 +65,11 @@ public class Plugin : PluginBase
             foreach (AppEntry app in e.OldItems)
                 app.PropertyChanged -= OnAppPropertyChanged;
         }
+        SaveSettings();
+    }
+
+    private void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
         SaveSettings();
     }
 

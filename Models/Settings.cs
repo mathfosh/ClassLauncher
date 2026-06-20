@@ -29,10 +29,52 @@ public partial class AppEntry : ObservableObject
     [ObservableProperty]
     private string _arguments = "";
 
+    /// <summary>
+    /// 是否启用此规则。用户可手动切换，系统也可自动禁用。
+    /// </summary>
+    [ObservableProperty]
+    private bool _isEnabled = true;
+
+    /// <summary>
+    /// 是否允许系统在启动失败时自动禁用此规则。
+    /// </summary>
+    [ObservableProperty]
+    private bool _autoDisableOnFail = true;
+
+    /// <summary>
+    /// 累计启动失败次数。
+    /// </summary>
+    [ObservableProperty]
+    private int _failCount;
+
+    /// <summary>
+    /// 系统自动禁用此规则的时间。null 表示未被系统自动禁用。
+    /// </summary>
+    [ObservableProperty]
+    private DateTime? _autoDisabledAt;
+
+    /// <summary>
+    /// 状态描述文本（用于 UI 显示）。
+    /// </summary>
+    public string StatusText => AutoDisabledAt.HasValue
+        ? $"已自动禁用（{AutoDisabledAt:MM-dd HH:mm}）"
+        : !IsEnabled
+            ? "已手动禁用"
+            : "启用中";
+
     partial void OnAdvanceMinutesChanged(double value)
     {
         if (value < 0)
             AdvanceMinutes = 0;
+    }
+
+    /// <summary>
+    /// 重置失败计数和自动禁用状态（用户手动重新启用时调用）。
+    /// </summary>
+    public void ResetAutoDisableState()
+    {
+        FailCount = 0;
+        AutoDisabledAt = null;
     }
 }
 
@@ -40,4 +82,34 @@ public partial class Settings : ObservableObject
 {
     [ObservableProperty]
     private ObservableCollection<AppEntry> _apps = new();
+
+    /// <summary>
+    /// 是否启用全局自动禁用机制。
+    /// </summary>
+    [ObservableProperty]
+    private bool _autoDisableEnabled = true;
+
+    /// <summary>
+    /// 启动失败多少次后自动禁用规则。默认 1 次。
+    /// </summary>
+    [ObservableProperty]
+    private int _autoDisableFailThreshold = 1;
+
+    /// <summary>
+    /// 自动恢复时间（分钟）。0=不自动恢复，>0=禁用后N分钟自动重新启用。
+    /// </summary>
+    [ObservableProperty]
+    private int _autoRecoveryMinutes;
+
+    partial void OnAutoDisableFailThresholdChanged(int value)
+    {
+        if (value < 1)
+            AutoDisableFailThreshold = 1;
+    }
+
+    partial void OnAutoRecoveryMinutesChanged(int value)
+    {
+        if (value < 0)
+            AutoRecoveryMinutes = 0;
+    }
 }
