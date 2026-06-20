@@ -161,6 +161,11 @@ public class SettingsPage : SettingsPageBase
                 break;
             case "PathBox":
                 app.Path = tb.Text ?? "";
+                UpdateArgsBoxState(tb);
+                break;
+            case "ArgsBox":
+                app.Arguments = tb.Text ?? "";
+                ValidateArgsBox(tb);
                 break;
             case "CourseBox":
                 app.CourseNames = tb.Text ?? "";
@@ -172,6 +177,93 @@ public class SettingsPage : SettingsPageBase
                     app.AdvanceMinutes = 0;
                 break;
         }
+    }
+
+    /// <summary>
+    /// 根据 PathBox 内容更新关联的 ArgsBox 启用状态
+    /// </summary>
+    private static void UpdateArgsBoxState(TextBox pathBox)
+    {
+        var argsBox = FindCompanionBox(pathBox, "ArgsBox");
+        if (argsBox == null)
+            return;
+
+        var isExe = IsPathExecutable(pathBox.Text);
+        argsBox.IsEnabled = isExe;
+        argsBox.Watermark = isExe ? "示例: -w -h 1024" : "仅 .exe 文件支持参数";
+    }
+
+    /// <summary>
+    /// 验证参数格式：非空时必须以 - 开头
+    /// </summary>
+    private static void ValidateArgsBox(TextBox argsBox)
+    {
+        var text = argsBox.Text ?? "";
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            argsBox.BorderBrush = null;
+            ToolTip.SetTip(argsBox, null);
+            return;
+        }
+
+        var args = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var allValid = args.All(a => a.StartsWith('-'));
+        if (!allValid)
+        {
+            argsBox.BorderBrush = new SolidColorBrush(Colors.Red);
+            ToolTip.SetTip(argsBox, "参数格式错误：每个参数必须以 - 开头");
+        }
+        else
+        {
+            argsBox.BorderBrush = null;
+            ToolTip.SetTip(argsBox, null);
+        }
+    }
+
+    /// <summary>
+    /// 检测路径是否指向可执行文件（.exe）
+    /// </summary>
+    private static bool IsPathExecutable(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return false;
+
+        // 检查是否为目录
+        if (Directory.Exists(path))
+            return false;
+
+        // 检查扩展名
+        return string.Equals(Path.GetExtension(path), ".exe", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// 在同一个 Grid 行中按 Name 查找关联的 TextBox
+    /// </summary>
+    private static TextBox? FindCompanionBox(TextBox source, string targetName)
+    {
+        if (source.Parent is not Panel parentPanel)
+            return null;
+        var grid = parentPanel.Parent as Grid;
+        if (grid == null)
+        {
+            // source 可能被 StackPanel 包裹，再上一层是 Grid
+            grid = parentPanel.Parent as Grid;
+        }
+        // 从 source 的 StackPanel 找到 Grid
+        var sp = source.Parent as StackPanel;
+        grid = sp?.Parent as Grid;
+        if (grid == null)
+            return null;
+
+        foreach (var child in grid.Children)
+        {
+            foreach (var tb in FindVisualChildren<TextBox>(child))
+            {
+                if (tb.Name == targetName)
+                    return tb;
+            }
+        }
+        return null;
     }
 
     private Control CreateAppRow(AppEntry app)
@@ -186,7 +278,7 @@ public class SettingsPage : SettingsPageBase
 
         var grid = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("*,*,Auto,60,Auto"),
+            ColumnDefinitions = new ColumnDefinitions("*,*,*,Auto,60,Auto"),
             RowDefinitions = new RowDefinitions("Auto")
         };
 
@@ -208,6 +300,24 @@ public class SettingsPage : SettingsPageBase
         Grid.SetColumn(pathPanel, 1);
         grid.Children.Add(pathPanel);
 
+        // 参数
+        var argsPanel = new StackPanel { Margin = new Thickness(0, 0, 8, 0), Spacing = 2 };
+        argsPanel.Children.Add(new TextBlock { Text = "启动参数", FontSize = 12, Foreground = Brushes.Gray });
+        var isExe = IsPathExecutable(app.Path);
+        var argsBox = new TextBox
+        {
+            MinWidth = 100,
+            Text = app.Arguments,
+            Name = "ArgsBox",
+            Tag = app,
+            IsEnabled = isExe,
+            Watermark = isExe ? "示例: -w -h 1024" : "仅 .exe 文件支持参数"
+        };
+        argsBox.PropertyChanged += OnTextBoxPropertyChanged;
+        argsPanel.Children.Add(argsBox);
+        Grid.SetColumn(argsPanel, 2);
+        grid.Children.Add(argsPanel);
+
         // 限定课程
         var coursePanel = new StackPanel { Margin = new Thickness(0, 0, 8, 0), Spacing = 2 };
         coursePanel.Children.Add(new TextBlock { Text = "限定课程（逗号分隔）", FontSize = 12, Foreground = Brushes.Gray });
@@ -215,7 +325,7 @@ public class SettingsPage : SettingsPageBase
             Watermark = "留空=所有课程" };
         courseBox.PropertyChanged += OnTextBoxPropertyChanged;
         coursePanel.Children.Add(courseBox);
-        Grid.SetColumn(coursePanel, 2);
+        Grid.SetColumn(coursePanel, 3);
         grid.Children.Add(coursePanel);
 
         // 提前提示
@@ -225,7 +335,7 @@ public class SettingsPage : SettingsPageBase
             Watermark = "0" };
         advanceBox.PropertyChanged += OnTextBoxPropertyChanged;
         advancePanel.Children.Add(advanceBox);
-        Grid.SetColumn(advancePanel, 3);
+        Grid.SetColumn(advancePanel, 4);
         grid.Children.Add(advancePanel);
 
         // 删除按钮
@@ -236,7 +346,7 @@ public class SettingsPage : SettingsPageBase
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Bottom
         };
         deleteBtn.Click += DeleteApp_Click;
-        Grid.SetColumn(deleteBtn, 4);
+        Grid.SetColumn(deleteBtn, 5);
         grid.Children.Add(deleteBtn);
 
         border.Child = grid;

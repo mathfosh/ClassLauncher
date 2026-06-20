@@ -23,6 +23,12 @@ public partial class AppEntry : ObservableObject
     [ObservableProperty]
     private double _advanceMinutes;
 
+    /// <summary>
+    /// 命令行参数。需以 - 开头，多个参数用空格分隔。
+    /// </summary>
+    [ObservableProperty]
+    private string _arguments = "";
+
     partial void OnAdvanceMinutesChanged(double value)
     {
         if (value < 0)

@@ -220,6 +220,7 @@ public class AppLaunchService : IHostedService
             using var process = Process.Start(new ProcessStartInfo
             {
                 FileName = app.Path,
+                Arguments = app.Arguments ?? "",
                 UseShellExecute = true
             });
         }
