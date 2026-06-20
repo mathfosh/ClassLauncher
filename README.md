@@ -20,7 +20,7 @@
 
 - 可直接填写可执行文件的完整路径，例如：`C:\Program Files\Notepad++\notepad++.exe`
 - 如果软件已添加到系统 PATH 环境变量，也可直接填写文件名，例如：`notepad.exe`
-- 支持填入参数，例如：`C:\path\to\app.exe --argument`
+- 暂时不支持填入参数 coming soon...
 
 ## 兼容性
 
