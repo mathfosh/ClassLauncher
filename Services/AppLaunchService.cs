@@ -2,7 +2,6 @@ using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
-using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using ClassIsland.Core;
 using ClassIsland.Core.Abstractions.Services;
@@ -11,7 +10,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ClassLauncher.Models;
 using AvaloniaBitmap = Avalonia.Media.Imaging.Bitmap;
-using SysBitmap = System.Drawing.Bitmap;
 using SysIcon = System.Drawing.Icon;
 
 namespace ClassLauncher.Services;

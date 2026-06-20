@@ -254,17 +254,9 @@ public class SettingsPage : SettingsPageBase
     /// </summary>
     private static TextBox? FindCompanionBox(TextBox source, string targetName)
     {
-        if (source.Parent is not Panel parentPanel)
-            return null;
-        var grid = parentPanel.Parent as Grid;
-        if (grid == null)
-        {
-            // source 可能被 StackPanel 包裹，再上一层是 Grid
-            grid = parentPanel.Parent as Grid;
-        }
         // 从 source 的 StackPanel 找到 Grid
         var sp = source.Parent as StackPanel;
-        grid = sp?.Parent as Grid;
+        var grid = sp?.Parent as Grid;
         if (grid == null)
             return null;
 

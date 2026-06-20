@@ -32,7 +32,6 @@
         <None Update="icon.png">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Remove="Views\SettingsPages\SettingsPage.xaml" />
     </ItemGroup>
 
 </Project>
